@@ -1,0 +1,278 @@
+{% extends 'layout.html' %}
+
+{% block title %}Admin Login & Signup{% endblock %}
+
+{% block content %}
+<!-- Admin Auth Page -->
+<section class="auth-section admin-auth">
+    <div class="auth-container">
+        <!-- Left Panel - Branding -->
+        <div class="auth-branding admin-branding">
+            <div class="branding-content">
+                <div class="branding-icon animate-scale-in">
+                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="40" cy="40" r="35" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                        <circle cx="40" cy="40" r="25" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                        <path d="M40 20 L40 60 M40 20 L55 35 L40 35 L55 50 L40 50 L55 60" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M40 20 L25 35 L40 35 L25 50 L40 50 L25 60" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <circle cx="40" cy="40" r="8" fill="currentColor"/>
+                    </svg>
+                </div>
+                
+                <h1 class="branding-title animate-slide-up">Admin Portal</h1>
+                <p class="branding-subtitle animate-slide-up delay-1">
+                    Access the administrative dashboard to manage users, 
+                    view all yield records, and oversee the entire platform operations.
+                </p>
+                
+                <!-- Warning Banner -->
+                <div class="admin-warning animate-fade-in delay-2">
+                    <div class="warning-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </div>
+                    <div class="warning-text">
+                        <strong>Elevated Privileges</strong>
+                        <p>Admins have full access to all user data and system configurations. Please ensure you are authorized.</p>
+                    </div>
+                </div>
+                
+                <div class="branding-features animate-fade-in delay-3">
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        <span>User Management</span>
+                    </div>
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        <span>View All Records</span>
+                    </div>
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        <span>System Analytics</span>
+                    </div>
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        <span>Audit Logs</span>
+                    </div>
+                </div>
+                
+                <!-- Decorative Elements -->
+                <div class="branding-decoration admin-deco">
+                    <div class="deco-shield shield-1">
+                        <svg viewBox="0 0 24 24" fill="currentColor" opacity="0.1">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <div class="deco-shield shield-2">
+                        <svg viewBox="0 0 24 24" fill="currentColor" opacity="0.1">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Auth Forms -->
+        <div class="auth-forms">
+            <div class="auth-card admin-card">
+                <!-- Admin Badge -->
+                <div class="admin-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                    <span>Administrator Access</span>
+                </div>
+                
+                <!-- Tab Switcher -->
+                <div class="auth-tabs admin-tabs">
+                    <button class="auth-tab active" data-tab="login" id="adminLoginTab">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10,17 15,12 10,7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Sign In
+                    </button>
+                    <button class="auth-tab" data-tab="signup" id="adminSignupTab">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                        Sign Up
+                    </button>
+                    <div class="tab-indicator"></div>
+                </div>
+                
+                <!-- Admin Login Form -->
+                <div class="auth-form-container active" id="adminLoginForm">
+                    <div class="form-header">
+                        <h2>Admin Sign In</h2>
+                        <p>Enter your administrator credentials</p>
+                    </div>
+                    
+                    <form action="{{ url_for('login_admin') }}" method="POST" class="auth-form" id="adminLoginFormEl">
+                        <div class="form-group">
+                            <label for="admin-login-email">Admin Email</label>
+                            <div class="input-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <input type="email" id="admin-login-email" name="email" placeholder="admin@agricloud.com" required>
+                            </div>
+                            <span class="error-message" id="admin-login-email-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin-login-password">Admin Password</label>
+                            <div class="input-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input type="password" id="admin-login-password" name="password" placeholder="Enter admin password" required minlength="8">
+                                <button type="button" class="toggle-password" data-target="admin-login-password">
+                                    <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="error-message" id="admin-login-password-error"></span>
+                        </div>
+                        
+                        <div class="form-options">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" name="remember">
+                                <span class="checkmark"></span>
+                                Remember this device
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-admin btn-block">
+                            <span>Sign In as Admin</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>Need admin access? <button type="button" class="switch-form" data-target="signup">Request Account</button></p>
+                    </div>
+                </div>
+                
+                <!-- Admin Signup Form -->
+                <div class="auth-form-container" id="adminSignupForm">
+                    <div class="form-header">
+                        <h2>Admin Registration</h2>
+                        <p>Create an administrator account</p>
+                    </div>
+                    
+                    <form action="{{ url_for('signup_admin') }}" method="POST" class="auth-form" id="adminSignupFormEl">
+                        <div class="form-group">
+                            <label for="admin-signup-name">Full Name</label>
+                            <div class="input-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <input type="text" id="admin-signup-name" name="name" placeholder="Admin Name" required minlength="2">
+                            </div>
+                            <span class="error-message" id="admin-signup-name-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin-signup-email">Admin Email</label>
+                            <div class="input-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <input type="email" id="admin-signup-email" name="email" placeholder="admin@agricloud.com" required>
+                            </div>
+                            <span class="error-message" id="admin-signup-email-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin-signup-password">Admin Password</label>
+                            <div class="input-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input type="password" id="admin-signup-password" name="password" placeholder="Min. 8 characters (strong)" required minlength="8">
+                                <button type="button" class="toggle-password" data-target="admin-signup-password">
+                                    <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="password-strength admin-strength" id="admin-password-strength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill"></div>
+                                </div>
+                                <span class="strength-text">Minimum 8 characters required</span>
+                            </div>
+                            <span class="error-message" id="admin-signup-password-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-wrapper terms">
+                                <input type="checkbox" name="terms" required>
+                                <span class="checkmark"></span>
+                                I acknowledge that I am authorized to create an admin account
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-admin btn-block">
+                            <span>Create Admin Account</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p>Already an admin? <button type="button" class="switch-form" data-target="login">Sign in</button></p>
+                    </div>
+                </div>
+                
+                <!-- Farmer Link -->
+                <div class="admin-link farmer-link">
+                    <a href="{{ url_for('auth') }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        Back to Farmer Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

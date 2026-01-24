@@ -1,0 +1,577 @@
+{% extends 'layout.html' %}
+
+{% block title %}Home - Cloud-Powered Agricultural Analytics{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-container">
+        <div class="hero-content">
+            <div class="hero-badge animate-fade-in">
+                <span class="badge-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                    </svg>
+                </span>
+                AWS Capstone Project 2024
+            </div>
+            
+            <h1 class="hero-title animate-slide-up">
+                <span class="title-line">Digitizing</span>
+                <span class="title-highlight">Agricultural Yield</span>
+                <span class="title-line">Intelligence</span>
+            </h1>
+            
+            <p class="hero-subtitle animate-slide-up delay-1">
+                Cloud-Powered Crop Analytics Platform designed for modern farmers. 
+                Store, analyze, and optimize your agricultural yield data with enterprise-grade security and real-time insights.
+            </p>
+            
+            <div class="hero-buttons animate-slide-up delay-2">
+                <a href="{{ url_for('auth') }}" class="btn btn-primary btn-lg">
+                    <span>Get Started</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12,5 19,12 12,19"/>
+                    </svg>
+                </a>
+                <a href="{{ url_for('about') }}" class="btn btn-outline btn-lg">
+                    <span>Learn More</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,16 12,12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                </a>
+            </div>
+            
+            <div class="hero-stats animate-fade-in delay-3">
+                <div class="stat-item">
+                    <span class="stat-number" data-count="99.9">99.9%</span>
+                    <span class="stat-label">Uptime</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number" data-count="256">256-bit</span>
+                    <span class="stat-label">Encryption</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number" data-count="24">24/7</span>
+                    <span class="stat-label">Monitoring</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="hero-visual animate-scale-in">
+            <div class="hero-illustration">
+                <div class="illustration-circle circle-outer"></div>
+                <div class="illustration-circle circle-middle"></div>
+                <div class="illustration-circle circle-inner"></div>
+                <div class="illustration-icon">
+                    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Leaf/Plant Icon -->
+                        <path d="M60 20 C60 20, 30 45, 30 70 C30 90 43 105 60 105 C77 105 90 90 90 70 C90 45 60 20 60 20Z" 
+                              fill="url(#leafGradient)" opacity="0.9"/>
+                        <path d="M60 40 L60 90" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M60 55 L45 45" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M60 70 L75 60" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <!-- Data Points -->
+                        <circle cx="30" cy="30" r="4" fill="#4CAF50" class="data-point"/>
+                        <circle cx="90" cy="35" r="3" fill="#81C784" class="data-point"/>
+                        <circle cx="25" cy="80" r="3" fill="#A5D6A7" class="data-point"/>
+                        <circle cx="95" cy="85" r="4" fill="#66BB6A" class="data-point"/>
+                        <defs>
+                            <linearGradient id="leafGradient" x1="30" y1="20" x2="90" y2="105">
+                                <stop offset="0%" stop-color="#4CAF50"/>
+                                <stop offset="100%" stop-color="#2E7D32"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <!-- Floating Elements -->
+                <div class="floating-element fe-1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    </svg>
+                </div>
+                <div class="floating-element fe-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                    </svg>
+                </div>
+                <div class="floating-element fe-3">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator animate-bounce">
+        <span>Scroll to explore</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6,9 12,15 18,9"/>
+        </svg>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features" id="features">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Features</span>
+            <h2 class="section-title">Why Choose Our Platform?</h2>
+            <p class="section-subtitle">
+                Built on AWS infrastructure with enterprise-grade security and scalability
+            </p>
+        </div>
+        
+        <div class="features-grid">
+            <!-- Feature 1: Secure Cloud Storage -->
+            <div class="feature-card" data-aos="fade-up">
+                <div class="feature-icon">
+                    <div class="icon-bg"></div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                        <path d="M12 12v4"/>
+                        <path d="M12 8h.01"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Secure Cloud Storage</h3>
+                <p class="feature-description">
+                    Your data is stored securely on AWS DynamoDB with automatic backups, 
+                    encryption at rest, and multi-region redundancy for maximum reliability.
+                </p>
+                <ul class="feature-list">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        256-bit AES Encryption
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        Automatic Daily Backups
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        99.99% Durability
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Feature 2: Role-Based Access Control -->
+            <div class="feature-card featured" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-badge">Most Popular</div>
+                <div class="feature-icon">
+                    <div class="icon-bg"></div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Role-Based Access Control</h3>
+                <p class="feature-description">
+                    Granular permissions powered by AWS IAM ensure that farmers and administrators 
+                    have appropriate access levels with complete audit trails.
+                </p>
+                <ul class="feature-list">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        Farmer & Admin Roles
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        AWS IAM Integration
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        Complete Audit Logs
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Feature 3: Real-Time Notifications -->
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-icon">
+                    <div class="icon-bg"></div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        <circle cx="18" cy="4" r="3" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Real-Time Notifications</h3>
+                <p class="feature-description">
+                    Stay informed with AWS SNS-powered notifications for yield updates, 
+                    system alerts, and important agricultural insights delivered instantly.
+                </p>
+                <ul class="feature-list">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        Instant Email Alerts
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        SMS Notifications
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"/>
+                        </svg>
+                        Customizable Triggers
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+    <div class="section-container">
+        <div class="section-header">
+            <span class="section-tag">Process</span>
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">
+                Get started in minutes with our simple three-step process
+            </p>
+        </div>
+        
+        <div class="steps-container">
+            <div class="steps-line"></div>
+            
+            <div class="step-card" data-aos="fade-right">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                    </div>
+                    <h3>Create Account</h3>
+                    <p>Register as a farmer or administrator with your credentials. Verification is instant and secure.</p>
+                </div>
+            </div>
+            
+            <div class="step-card" data-aos="fade-left" data-aos-delay="100">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                            <line x1="12" y1="18" x2="12" y2="12"/>
+                            <line x1="9" y1="15" x2="15" y2="15"/>
+                        </svg>
+                    </div>
+                    <h3>Input Your Data</h3>
+                    <p>Enter your crop yield information including type, season, area, and harvest amounts with our intuitive forms.</p>
+                </div>
+            </div>
+            
+            <div class="step-card" data-aos="fade-right" data-aos-delay="200">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                            <rect x="1" y="3" width="22" height="18" rx="2" ry="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <h3>Analyze & Optimize</h3>
+                    <p>Access powerful analytics dashboard to track trends, compare seasons, and make data-driven decisions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Digital Agriculture Section -->
+<section class="why-digital">
+    <div class="section-container">
+        <div class="why-digital-grid">
+            <div class="why-content" data-aos="fade-right">
+                <span class="section-tag">The Future</span>
+                <h2 class="section-title">Why Digital Agriculture?</h2>
+                <p class="why-description">
+                    Traditional farming methods often lead to inefficiencies, data loss, and missed opportunities. 
+                    Digital agriculture transforms how farmers manage their operations, bringing precision, 
+                    predictability, and profitability to modern farming.
+                </p>
+                
+                <div class="why-benefits">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/>
+                                <polyline points="17,6 23,6 23,12"/>
+                            </svg>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>Increased Productivity</h4>
+                            <p>Data-driven insights help optimize planting and harvesting schedules</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>Time Savings</h4>
+                            <p>Automate record-keeping and eliminate manual paperwork</p>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item">
+                        <div class="benefit-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="benefit-text">
+                            <h4>Better Financial Planning</h4>
+                            <p>Historical data enables accurate forecasting and budgeting</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="why-visual" data-aos="fade-left">
+                <div class="stats-showcase">
+                    <div class="showcase-card">
+                        <div class="showcase-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20V10"/>
+                                <path d="M18 20V4"/>
+                                <path d="M6 20v-4"/>
+                            </svg>
+                        </div>
+                        <div class="showcase-value">40%</div>
+                        <div class="showcase-label">Efficiency Increase</div>
+                    </div>
+                    
+                    <div class="showcase-card highlight">
+                        <div class="showcase-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div class="showcase-value">25%</div>
+                        <div class="showcase-label">Cost Reduction</div>
+                    </div>
+                    
+                    <div class="showcase-card">
+                        <div class="showcase-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="showcase-value">10K+</div>
+                        <div class="showcase-label">Farmers Served</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cloud Benefits Section -->
+<section class="cloud-benefits">
+    <div class="section-container">
+        <div class="section-header light">
+            <span class="section-tag" style="color: green; font-size: 1.2em;">Technology</span>
+            <h2 class="section-title">How Cloud Helps Farmers</h2>
+            <p class="section-subtitle" style="color: #333;">
+                Leveraging AWS infrastructure to bring enterprise technology to agriculture
+            </p>
+        </div>
+        
+        <div class="cloud-grid">
+            <div class="cloud-card" data-aos="zoom-in" style="text-align:center;">
+                <div class="cloud-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="560"
+                        height="560"
+                        style="display:block; margin:0 auto;"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2">
+                        
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                        <line x1="8" y1="21" x2="16" y2="21"/>
+                        <line x1="12" y1="17" x2="12" y2="21"/>
+                    </svg>
+                </div>
+
+                <h3>Access Anywhere</h3>
+                <p>
+                    View and manage your data from any device, anywhere in the world with internet access.
+                </p>
+            </div>
+</div>
+
+            
+            <div class="cloud-card" data-aos="zoom-in" data-aos-delay="100" style="text-align:center;">
+    <div class="cloud-icon">
+        <svg
+            viewBox="0 0 24 24"
+            width="560"
+            height="560"
+            style="display:block; margin:0 auto;"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+    </div>
+
+    <h3>Auto Scaling</h3>
+    <p>
+        Infrastructure automatically scales to handle seasonal peaks without any manual intervention.
+    </p>
+</div>
+
+            
+            <div class="cloud-card" data-aos="zoom-in" data-aos-delay="200" style="text-align:center;">
+    <div class="cloud-icon">
+        <svg
+            viewBox="0 0 24 24"
+            width="560"
+            height="560"
+            style="display:block; margin:0 auto;"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+    </div>
+
+    <h3>Data Security</h3>
+    <p>
+        Enterprise-grade security with encryption, access controls, and compliance certifications.
+    </p>
+</div>
+
+            
+            <div class="cloud-card" data-aos="zoom-in" data-aos-delay="300" style="text-align:center;">
+    <div class="cloud-icon">
+        <svg
+            viewBox="0 0 24 24"
+            width="560"
+            height="560"
+            style="display:block; margin:0 auto;"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06
+                     a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06
+                     a1.65 1.65 0 0 0-1.82-.33
+                     a1.65 1.65 0 0 0-1 1.51V21
+                     a2 2 0 0 1-2 2
+                     a2 2 0 0 1-2-2v-.09
+                     a1.65 1.65 0 0 0-1-1.51
+                     a1.65 1.65 0 0 0-1.82.33l-.06.06
+                     a2 2 0 0 1-2.83 0
+                     a2 2 0 0 1 0-2.83l.06-.06
+                     a1.65 1.65 0 0 0 .33-1.82
+                     a1.65 1.65 0 0 0-1.51-1H3
+                     a2 2 0 0 1-2-2
+                     a2 2 0 0 1 2-2h.09
+                     a1.65 1.65 0 0 0 1.51-1
+                     a1.65 1.65 0 0 0-.33-1.82l-.06-.06
+                     a2 2 0 0 1 0-2.83
+                     a2 2 0 0 1 2.83 0l.06.06
+                     a1.65 1.65 0 0 0 1.82.33H9
+                     a1.65 1.65 0 0 0 1-1.51V3
+                     a2 2 0 0 1 2-2
+                     a2 2 0 0 1 2 2v.09
+                     a1.65 1.65 0 0 0 1 1.51
+                     a1.65 1.65 0 0 0 1.82-.33l.06-.06
+                     a2 2 0 0 1 2.83 0
+                     a2 2 0 0 1 0 2.83l-.06.06
+                     a1.65 1.65 0 0 0-.33 1.82V9
+                     a1.65 1.65 0 0 0 1.51 1H21
+                     a2 2 0 0 1 2 2
+                     a2 2 0 0 1-2 2h-.09
+                     a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+    </div>
+
+    <h3>Zero Maintenance</h3>
+    <p>
+        AWS handles all infrastructure maintenance, updates, and patches automatically.
+    </p>
+</div>
+
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="section-container">
+        <div class="cta-card" data-aos="zoom-in">
+            <div class="cta-content">
+                <h2>Ready to Transform Your Farm?</h2>
+                <p>Join thousands of farmers already using our platform to optimize their yield management.</p>
+                <div class="cta-buttons">
+                    <a href="{{ url_for('auth') }}" class="btn btn-light btn-lg">
+                        Start Free Today
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="12,5 19,12 12,19"/>
+                        </svg>
+                    </a>
+                    <a href="{{ url_for('about') }}" class="btn btn-outline-light btn-lg">
+                        View Documentation
+                    </a>
+                </div>
+            </div>
+            <div class="cta-decoration">
+                <div class="deco-circle deco-1"></div>
+                <div class="deco-circle deco-2"></div>
+                <div class="deco-circle deco-3"></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Crop Yield Data Storage and Management Solution - Cloud-Powered Agricultural Analytics Platform">
+    <meta name="author" content="AgriTech Solutions">
+    <title>{% block title %}Crop Yield Management{% endblock %} | AgriTech Cloud</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Animated Background Elements -->
+    <div class="bg-decoration">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="navbar" id="navbar">
+        <div class="nav-container">
+            <!-- Logo -->
+            <a href="{{ url_for('index') }}" class="nav-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2"/>
+                        <path d="M20 8 C20 8, 12 16, 12 22 C12 26.4 15.6 30 20 30 C24.4 30 28 26.4 28 22 C28 16 20 8 20 8Z" fill="currentColor"/>
+                        <path d="M20 14 L20 24 M16 20 L24 20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <span class="logo-text">
+                    <span class="logo-primary">Agri</span><span class="logo-secondary">Cloud</span>
+                </span>
+            </a>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span class="hamburger"></span>
+            </button>
+
+            <!-- Navigation Links -->
+            <nav class="nav-menu" id="navMenu">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                    <polyline points="9,22 9,12 15,12 15,22"/>
+                                </svg>
+                            </span>
+                            Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                            </span>
+                            About
+                        </a>
+                    </li>
+                    
+                    {% if session.get('user') %}
+                        <!-- Logged In Navigation -->
+                        {% if session.get('role') == 'admin' %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                                    <span class="nav-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="7"/>
+                                            <rect x="14" y="3" width="7" height="7"/>
+                                            <rect x="14" y="14" width="7" height="7"/>
+                                            <rect x="3" y="14" width="7" height="7"/>
+                                        </svg>
+                                    </span>
+                                    Admin Panel
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                                    <span class="nav-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="7"/>
+                                            <rect x="14" y="3" width="7" height="7"/>
+                                            <rect x="14" y="14" width="7" height="7"/>
+                                            <rect x="3" y="14" width="7" height="7"/>
+                                        </svg>
+                                    </span>
+                                    Dashboard
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="nav-item nav-user">
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    {{ session.get('name', 'U')[0] | upper }}
+                                </div>
+                                <span class="user-name">{{ session.get('name', 'User') }}</span>
+                                <span class="user-role {% if session.get('role') == 'admin' %}admin{% endif %}">
+                                    {{ session.get('role', 'user') | capitalize }}
+                                </span>
+                            </div>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a href="{{ url_for('logout') }}" class="nav-link nav-logout">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16,17 21,12 16,7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                </span>
+                                Logout
+                            </a>
+                        </li>
+                    {% else %}
+                        <!-- Not Logged In Navigation -->
+                        <li class="nav-item">
+                            <a href="{{ url_for('auth') }}" class="nav-link {% if request.endpoint == 'auth' %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </span>
+                                Farmer Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('auth_admin') }}" class="nav-link nav-admin-link {% if request.endpoint == 'auth_admin' %}active{% endif %}">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    </svg>
+                                </span>
+                                Admin Login
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}" data-aos="fade-down">
+                        <div class="flash-icon">
+                            {% if category == 'success' %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22,4 12,14.01 9,11.01"/>
+                                </svg>
+                            {% elif category == 'error' %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="15" y1="9" x2="9" y2="15"/>
+                                    <line x1="9" y1="9" x2="15" y2="15"/>
+                                </svg>
+                            {% else %}
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="16" x2="12" y2="12"/>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <span class="flash-text">{{ message }}</span>
+                        <button class="flash-close" onclick="this.parentElement.remove()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <!-- Brand Section -->
+                <div class="footer-brand">
+                    <a href="{{ url_for('index') }}" class="footer-logo">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="2"/>
+                                <path d="M20 8 C20 8, 12 16, 12 22 C12 26.4 15.6 30 20 30 C24.4 30 28 26.4 28 22 C28 16 20 8 20 8Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <span>AgriCloud</span>
+                    </a>
+                    <p class="footer-description">
+                        Empowering farmers with cloud-powered agricultural data management and analytics solutions.
+                    </p>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('about') }}">About Project</a></li>
+                        <li><a href="{{ url_for('auth') }}">Farmer Portal</a></li>
+                        <li><a href="{{ url_for('auth_admin') }}">Admin Portal</a></li>
+                    </ul>
+                </div>
+
+                <!-- Features -->
+                <div class="footer-links">
+                    <h4>Features</h4>
+                    <ul>
+                        <li><a href="#">Yield Tracking</a></li>
+                        <li><a href="#">Data Analytics</a></li>
+                        <li><a href="#">Cloud Storage</a></li>
+                        <li><a href="#">Real-time Reports</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="footer-contact">
+                    <h4>AWS Capstone Project</h4>
+                    <p>Crop Yield Data Storage and Management Solution</p>
+                    <div class="footer-tech">
+                        <span class="tech-badge">Flask</span>
+                        <span class="tech-badge">AWS EC2</span>
+                        <span class="tech-badge">DynamoDB</span>
+                        <span class="tech-badge">SNS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <p>&copy; {{ now.year }} Crop Yield Data Storage and Management Solution. All rights reserved.</p>
+                <p class="footer-credit">Built with Flask & AWS Cloud Services</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
