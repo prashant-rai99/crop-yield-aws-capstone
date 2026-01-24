@@ -1,60 +1,28 @@
-"""
-Crop Yield Data Storage and Management Solution
-Cloud-ready Flask application with AWS integration
-"""
+# Crop Yield Data Storage and Management
+# Reference-style Flask App (Non-AWS)
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from functools import wraps
-from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, session
 import os
 
-# 🔗 AWS Service Layer
-from app_aws import (
-    create_user,
-    verify_user,
-    add_yield_data,
-    get_user_yields,
-    get_all_users,
-    get_all_yields,
-    send_sns_notification
-)
-
-# =============================================================================
-# FLASK APP SETUP
-# =============================================================================
-
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+app.secret_key = "your_secret_key_here"
 
-# =============================================================================
-# DECORATORS
-# =============================================================================
+# ===============================
+# In-memory data (temporary)
+# ===============================
 
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if "user" not in session:
-            flash("Please log in to access this page.", "error")
-            return redirect(url_for("auth"))
-        return f(*args, **kwargs)
-    return decorated
+farmers = {}          # {email: password}
+admins = {}           # {email: password}
+yield_records = []    # list of dicts
 
-
-def admin_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if "user" not in session or session.get("role") != "admin":
-            flash("Admin access required.", "error")
-            return redirect(url_for("auth_admin"))
-        return f(*args, **kwargs)
-    return decorated
-
-# =============================================================================
-# PUBLIC ROUTES
-# =============================================================================
+# ===============================
+# ROUTES
+# ===============================
 
 @app.route("/")
 def index():
+    if "user" in session:
+        return redirect(url_for("dashboard"))
     return render_template("index.html")
 
 
@@ -62,177 +30,164 @@ def index():
 def about():
     return render_template("about.html")
 
-# =============================================================================
-# AUTH ROUTES
-# =============================================================================
+# ===============================
+# AUTH – COMMON
+# ===============================
 
 @app.route("/auth")
 def auth():
-    if "user" in session:
-        return redirect(url_for("dashboard"))
     return render_template("auth.html")
 
 
 @app.route("/auth/admin")
 def auth_admin():
-    if "user" in session and session.get("role") == "admin":
-        return redirect(url_for("admin_dashboard"))
     return render_template("auth_admin.html")
 
-# =============================================================================
-# SIGNUP
-# =============================================================================
+# ===============================
+# AUTH – FARMER
+# ===============================
 
-@app.route("/signup/farmer", methods=["POST"])
-def signup_farmer():
-    name = request.form.get("name", "").strip()
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
 
-    if not all([name, email, password]):
-        flash("All fields are required.", "error")
-        return redirect(url_for("auth"))
+        if email in farmers:
+            return "User already exists!"
 
-    success, message = create_user(email, password, name, role="farmer")
-    if not success:
-        flash(message, "error")
-        return redirect(url_for("auth"))
+        farmers[email] = password
+        return redirect(url_for("login"))
 
-    send_sns_notification(f"New farmer registered: {email}")
-    flash("Registration successful. Please log in.", "success")
-    return redirect(url_for("auth"))
+    return render_template("signup.html")
 
 
-@app.route("/signup/admin", methods=["POST"])
-def signup_admin():
-    name = request.form.get("name", "").strip()
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
 
-    if not all([name, email, password]):
-        flash("All fields are required.", "error")
-        return redirect(url_for("auth_admin"))
+        if email in farmers and farmers[email] == password:
+            session["user"] = email
+            session["role"] = "farmer"
+            return redirect(url_for("dashboard"))
 
-    success, message = create_user(email, password, name, role="admin")
-    if not success:
-        flash(message, "error")
-        return redirect(url_for("auth_admin"))
+        return "Invalid credentials!"
 
-    flash("Admin account created. Please log in.", "success")
-    return redirect(url_for("auth_admin"))
+    return render_template("login.html")
 
-# =============================================================================
-# LOGIN
-# =============================================================================
-
-@app.route("/login/farmer", methods=["POST"])
-def login_farmer():
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
-
-    success, user = verify_user(email, password)
-    if not success or user.get("Role") != "farmer":
-        flash("Invalid farmer credentials.", "error")
-        return redirect(url_for("auth"))
-
-    session["user"] = user["Email"]
-    session["name"] = user["Name"]
-    session["role"] = "farmer"
-    flash(f"Welcome, {user['Name']}!", "success")
-    return redirect(url_for("dashboard"))
-
-
-@app.route("/login/admin", methods=["POST"])
-def login_admin():
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
-
-    success, user = verify_user(email, password)
-    if not success or user.get("Role") != "admin":
-        flash("Invalid admin credentials.", "error")
-        return redirect(url_for("auth_admin"))
-
-    session["user"] = user["Email"]
-    session["name"] = user["Name"]
-    session["role"] = "admin"
-    flash("Admin login successful.", "success")
-    return redirect(url_for("admin_dashboard"))
-
-# =============================================================================
-# LOGOUT
-# =============================================================================
 
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("Logged out successfully.", "info")
     return redirect(url_for("index"))
 
-# =============================================================================
+# ===============================
 # FARMER DASHBOARD
-# =============================================================================
+# ===============================
 
 @app.route("/dashboard")
-@login_required
 def dashboard():
-    if session.get("role") == "admin":
-        return redirect(url_for("admin_dashboard"))
+    if "user" not in session:
+        return redirect(url_for("login"))
 
-    email = session["user"]
-    yields = get_user_yields(email)
+    user = session["user"]
+    my_yields = [y for y in yield_records if y["email"] == user]
 
-    return render_template("dashboard.html", yields=yields)
+    return render_template(
+        "dashboard.html",
+        user=user,
+        yields=my_yields
+    )
 
-@app.route("/add_yield", methods=["GET", "POST"])
-@login_required
+
+@app.route("/add-yield", methods=["GET", "POST"])
 def add_yield():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
     if request.method == "POST":
-        crop = request.form.get("crop_name")
-        season = request.form.get("season")
-        amount = request.form.get("yield_amount")
-        area = request.form.get("area")
+        crop = request.form["crop"]
+        season = request.form["season"]
+        amount = request.form["amount"]
+        area = request.form["area"]
 
-        success, _ = add_yield_data(
-            session["user"], crop, season, amount, area
-        )
+        record = {
+            "email": session["user"],
+            "crop": crop,
+            "season": season,
+            "amount": amount,
+            "area": area
+        }
 
-        if success:
-            send_sns_notification(
-                f"{session['user']} added yield data for {crop}"
-            )
-            flash("Yield data added successfully.", "success")
-            return redirect(url_for("dashboard"))
-
-        flash("Failed to add yield data.", "error")
+        yield_records.append(record)
+        return redirect(url_for("dashboard"))
 
     return render_template("add_yield.html")
 
-# =============================================================================
-# ADMIN DASHBOARD
-# =============================================================================
+# ===============================
+# ADMIN ROUTES
+# ===============================
+
+@app.route("/admin/signup", methods=["GET", "POST"])
+def admin_signup():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        if email in admins:
+            return "Admin already exists!"
+
+        admins[email] = password
+        return redirect(url_for("admin_login"))
+
+    return render_template("admin_signup.html")
+
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        if email in admins and admins[email] == password:
+            session["admin"] = email
+            session["role"] = "admin"
+            return redirect(url_for("admin_dashboard"))
+
+        return "Invalid admin credentials!"
+
+    return render_template("admin_login.html")
+
 
 @app.route("/admin/dashboard")
-@admin_required
 def admin_dashboard():
-    users = get_all_users()
-    yields = get_all_yields()
+    if "admin" not in session:
+        return redirect(url_for("admin_login"))
+
     return render_template(
         "admin_dashboard.html",
-        users=users,
-        yields=yields
+        users=farmers,
+        yields=yield_records
     )
 
-# =============================================================================
-# CONTEXT
-# =============================================================================
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin", None)
+    return redirect(url_for("index"))
+
+
+from datetime import datetime
 
 @app.context_processor
 def inject_now():
     return {"now": datetime.now()}
 
-# =============================================================================
-# ENTRY POINT
-# =============================================================================
+# ===============================
+# RUN
+# ===============================
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, port=5000)
