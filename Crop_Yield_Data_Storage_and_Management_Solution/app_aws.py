@@ -19,13 +19,14 @@ REGION = "us-east-1"
 
 dynamodb = boto3.resource(
     "dynamodb",
-    region_name="us-east-1",
-    endpoint_url="http://localhost:8000",
-    aws_access_key_id="fake",
-    aws_secret_access_key="fake"
+    region_name="us-east-1"
 )
 
-sns = None  # Local testing ke liye SNS off
+sns = boto3.client(
+    "sns",
+    region_name="us-east-1"
+)
+  # Local testing ke liye SNS off
 
 # DynamoDB Tables (MUST exist)
 users_table = dynamodb.Table("CropYield_Users")

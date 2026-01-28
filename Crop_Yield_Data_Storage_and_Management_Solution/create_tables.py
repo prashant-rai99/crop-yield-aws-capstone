@@ -2,10 +2,12 @@ import boto3
 
 dynamodb = boto3.resource(
     "dynamodb",
-    region_name="us-east-1",
-    endpoint_url="http://localhost:8000",
-    aws_access_key_id="fake",
-    aws_secret_access_key="fake"
+    region_name="us-east-1"
+)
+
+sns = boto3.client(
+    "sns",
+    region_name="us-east-1"
 )
 
 # ---------------- USERS TABLE ----------------
