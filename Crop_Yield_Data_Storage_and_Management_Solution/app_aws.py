@@ -17,8 +17,15 @@ app.secret_key = "crop_yield_aws_secret"
 
 REGION = "us-east-1"
 
-dynamodb = boto3.resource("dynamodb", region_name=REGION)
-sns = boto3.client("sns", region_name=REGION)
+dynamodb = boto3.resource(
+    "dynamodb",
+    region_name="us-east-1",
+    endpoint_url="http://localhost:8000",
+    aws_access_key_id="fake",
+    aws_secret_access_key="fake"
+)
+
+sns = None  # Local testing ke liye SNS off
 
 # DynamoDB Tables (MUST exist)
 users_table = dynamodb.Table("CropYield_Users")
@@ -40,6 +47,10 @@ def inject_now():
 # ===============================
 
 def send_notification(subject, message):
+    if sns is None:
+        print(f"[SNS MOCK] {subject}: {message}")
+        return
+
     try:
         sns.publish(
             TopicArn=SNS_TOPIC_ARN,

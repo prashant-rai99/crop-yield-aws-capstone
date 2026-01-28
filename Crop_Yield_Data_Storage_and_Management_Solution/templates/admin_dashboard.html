@@ -160,9 +160,9 @@
                             <td class="cell-user">
                                 <div class="user-info-cell">
                                     <div class="user-avatar-small {% if user.role == 'Admin' %}admin{% endif %}">
-                                        {{ user.name[0] | upper }}
+                                        {{ session.name[0] | upper }}
                                     </div>
-                                    <span class="user-name-cell">{{ user.name }}</span>
+                                    <span class="user-name-cell">{{ session.name }}</span>
                                 </div>
                             </td>
                             <td class="cell-email">{{ user.email }}</td>
