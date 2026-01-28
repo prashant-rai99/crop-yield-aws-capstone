@@ -33,7 +33,7 @@ users_table = dynamodb.Table("CropYield_Users")
 yield_table = dynamodb.Table("CropYield_Data")
 
 # 🔴 Replace with YOUR real SNS ARN
-SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:242201289978:Crop_aws:e90b5c81-2568-4276-84a4-460803fdb72a"
+SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:242201289978:Crop_aws"
 
 # ===============================
 # CONTEXT PROCESSOR
