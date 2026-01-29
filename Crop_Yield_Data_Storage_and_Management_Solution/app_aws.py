@@ -5,33 +5,39 @@ from datetime import datetime
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError, NoCredentialsError
 
+# ===============================
+# APP CONFIG
+# ===============================
+
 app = Flask(__name__)
 app.secret_key = "crop_yield_aws_secret"
-
-# ===============================
-# AWS CONFIGURATION (FIXED)
-# ===============================
-
 REGION = "us-east-1"
 
-# ✅ DynamoDB – FORCE AWS (NO LOCAL)
-dynamodb = boto3.resource(
-    "dynamodb",
-    region_name=REGION,
-    endpoint_url="https://dynamodb.us-east-1.amazonaws.com"
-)
+# ===============================
+# AWS CLIENTS (PRODUCTION SAFE)
+# ===============================
 
-# ❗ SNS OPTIONAL (disable safely if not ready)
-ENABLE_SNS = False   # 👈 deployment ke liye OFF rakho
+try:
+    dynamodb = boto3.resource("dynamodb", region_name=REGION)
+except NoCredentialsError:
+    dynamodb = None
+    print("❌ AWS credentials not found")
+
+# SNS (optional but enabled)
+ENABLE_SNS = True
+SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:242201289978:Crop_aws"
 
 if ENABLE_SNS:
-    sns = boto3.client("sns", region_name=REGION)
-    SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:242201289978:Crop_aws"
+    try:
+        sns = boto3.client("sns", region_name=REGION)
+    except Exception as e:
+        sns = None
+        print("SNS init failed:", e)
 else:
     sns = None
 
 # ===============================
-# TABLES (MUST EXIST)
+# DYNAMODB TABLES (MUST EXIST)
 # ===============================
 
 users_table = dynamodb.Table("CropYield_Users")
@@ -46,7 +52,7 @@ def inject_now():
     return {"now": datetime.now()}
 
 # ===============================
-# SNS SAFE HELPER
+# SNS HELPER (SAFE)
 # ===============================
 
 def send_notification(subject, message):
@@ -59,7 +65,7 @@ def send_notification(subject, message):
             Message=message
         )
     except Exception as e:
-        print("SNS skipped:", e)
+        print("SNS error:", e)
 
 # ===============================
 # ROUTES
@@ -83,14 +89,14 @@ def auth_admin():
 
 @app.route("/signup/farmer", methods=["POST"])
 def signup_farmer():
-    name = request.form["name"]
-    email = request.form["email"]
-    password = request.form["password"]
+    name = request.form.get("name")
+    email = request.form.get("email")
+    password = request.form.get("password")
 
     try:
         res = users_table.get_item(Key={"Email": email})
         if "Item" in res:
-            flash("User already exists", "error")
+            flash("Farmer already exists", "error")
             return redirect(url_for("auth"))
 
         users_table.put_item(
@@ -103,11 +109,12 @@ def signup_farmer():
             }
         )
 
+        send_notification("New Farmer Signup", f"{email} registered")
         flash("Signup successful", "success")
         return redirect(url_for("auth"))
 
     except Exception as e:
-        print(e)
+        print("Signup error:", e)
         flash("Signup failed", "error")
         return redirect(url_for("auth"))
 
@@ -117,15 +124,20 @@ def signup_farmer():
 
 @app.route("/login/farmer", methods=["POST"])
 def login_farmer():
-    email = request.form["email"]
-    password = request.form["password"]
+    email = request.form.get("email")
+    password = request.form.get("password")
 
-    res = users_table.get_item(Key={"Email": email})
+    try:
+        res = users_table.get_item(Key={"Email": email})
+        if "Item" in res and res["Item"]["Password"] == password:
+            session["user"] = email
+            session["role"] = "farmer"
 
-    if "Item" in res and res["Item"]["Password"] == password:
-        session["user"] = email
-        session["role"] = "farmer"
-        return redirect(url_for("dashboard"))
+            send_notification("Farmer Login", f"{email} logged in")
+            return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        print("Login error:", e)
 
     flash("Invalid credentials", "error")
     return redirect(url_for("auth"))
@@ -140,8 +152,15 @@ def dashboard():
         return redirect(url_for("auth"))
 
     email = session["user"]
-    res = yield_table.query(KeyConditionExpression=Key("UserEmail").eq(email))
-    yields = res.get("Items", [])
+
+    try:
+        res = yield_table.query(
+            KeyConditionExpression=Key("UserEmail").eq(email)
+        )
+        yields = res.get("Items", [])
+    except Exception as e:
+        print("Dashboard error:", e)
+        yields = []
 
     return render_template("dashboard.html", yields=yields)
 
@@ -151,15 +170,27 @@ def dashboard():
 
 @app.route("/add-yield", methods=["POST"])
 def add_yield():
-    yield_table.put_item(
-        Item={
-            "UserEmail": session["user"],
-            "YieldID": str(uuid.uuid4()),
-            "YieldAmount": float(request.form["yield_amount"]),
-            "Area": float(request.form["area"]),
-            "CreatedAt": datetime.utcnow().isoformat()
-        }
-    )
+    if session.get("role") != "farmer":
+        return redirect(url_for("auth"))
+
+    try:
+        yield_table.put_item(
+            Item={
+                "UserEmail": session["user"],
+                "YieldID": str(uuid.uuid4()),
+                "YieldAmount": float(request.form["yield_amount"]),
+                "Area": float(request.form["area"]),
+                "CreatedAt": datetime.utcnow().isoformat()
+            }
+        )
+
+        send_notification("Yield Added", f"{session['user']} added yield")
+        flash("Yield added successfully", "success")
+
+    except Exception as e:
+        print("Add yield error:", e)
+        flash("Failed to add yield", "error")
+
     return redirect(url_for("dashboard"))
 
 # ===============================
@@ -168,22 +199,36 @@ def add_yield():
 
 @app.route("/signup/admin", methods=["POST"])
 def signup_admin():
-    users_table.put_item(
-        Item={
-            "Email": request.form["email"],
-            "Name": request.form["name"],
-            "Password": request.form["password"],
-            "Role": "admin",
-            "CreatedAt": datetime.utcnow().isoformat()
-        }
-    )
+    try:
+        users_table.put_item(
+            Item={
+                "Email": request.form["email"],
+                "Name": request.form["name"],
+                "Password": request.form["password"],
+                "Role": "admin",
+                "CreatedAt": datetime.utcnow().isoformat()
+            }
+        )
+        flash("Admin registered", "success")
+    except Exception as e:
+        print("Admin signup error:", e)
+        flash("Admin signup failed", "error")
+
     return redirect(url_for("auth_admin"))
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
-    users = users_table.scan()["Items"]
-    yields = yield_table.scan()["Items"]
-    return render_template("admin_dashboard.html", users=users, yields=yields)
+    if session.get("role") != "admin":
+        return redirect(url_for("auth_admin"))
+
+    users = users_table.scan().get("Items", [])
+    yields = yield_table.scan().get("Items", [])
+
+    return render_template(
+        "admin_dashboard.html",
+        users=users,
+        yields=yields
+    )
 
 # ===============================
 # LOGOUT
@@ -192,6 +237,7 @@ def admin_dashboard():
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("Logged out", "success")
     return redirect(url_for("index"))
 
 # ===============================
@@ -199,4 +245,4 @@ def logout():
 # ===============================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
