@@ -2,13 +2,13 @@
 # Python Dependencies
 
 # Core Framework
-flask==3.0.0
+flask
 
 # Environment Variables
-python-dotenv==1.0.0
+python-dotenv
 
 # Production Server (for AWS EC2 deployment)
-gunicorn==21.2.0
+gunicorn
 
 # Future AWS Integration Dependencies (uncomment when needed)
 # boto3==1.34.0

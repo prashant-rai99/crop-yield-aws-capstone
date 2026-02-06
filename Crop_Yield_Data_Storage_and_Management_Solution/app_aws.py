@@ -25,7 +25,7 @@ except NoCredentialsError:
 
 # SNS (optional but enabled)
 ENABLE_SNS = True
-SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:242201289978:Crop_aws"
+SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:767828767507:Crop_aws"
 
 if ENABLE_SNS:
     try:
