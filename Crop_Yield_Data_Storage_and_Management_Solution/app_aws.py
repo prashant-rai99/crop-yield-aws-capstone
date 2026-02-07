@@ -2,8 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import boto3
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from boto3.dynamodb.conditions import Key
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import NoCredentialsError
 
 # ===============================
 # APP CONFIG
@@ -14,30 +15,28 @@ app.secret_key = "crop_yield_aws_secret"
 REGION = "us-east-1"
 
 # ===============================
-# AWS CLIENTS (PRODUCTION SAFE)
+# AWS CLIENTS
 # ===============================
 
 try:
     dynamodb = boto3.resource("dynamodb", region_name=REGION)
 except NoCredentialsError:
     dynamodb = None
-    print("❌ AWS credentials not found")
+    print("AWS credentials not found")
 
-# SNS (optional but enabled)
+# SNS
 ENABLE_SNS = True
 SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:767828767507:Crop_aws"
 
+sns = None
 if ENABLE_SNS:
     try:
         sns = boto3.client("sns", region_name=REGION)
     except Exception as e:
-        sns = None
         print("SNS init failed:", e)
-else:
-    sns = None
 
 # ===============================
-# DYNAMODB TABLES (MUST EXIST)
+# TABLES
 # ===============================
 
 users_table = dynamodb.Table("CropYield_Users")
@@ -52,7 +51,7 @@ def inject_now():
     return {"now": datetime.now()}
 
 # ===============================
-# SNS HELPER (SAFE)
+# SNS HELPER
 # ===============================
 
 def send_notification(subject, message):
@@ -68,12 +67,16 @@ def send_notification(subject, message):
         print("SNS error:", e)
 
 # ===============================
-# ROUTES
+# PUBLIC ROUTES
 # ===============================
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 @app.route("/auth")
 def auth():
@@ -89,34 +92,28 @@ def auth_admin():
 
 @app.route("/signup/farmer", methods=["POST"])
 def signup_farmer():
-    name = request.form.get("name")
-    email = request.form.get("email")
-    password = request.form.get("password")
+    name = request.form["name"]
+    email = request.form["email"]
+    password = request.form["password"]
 
-    try:
-        res = users_table.get_item(Key={"Email": email})
-        if "Item" in res:
-            flash("Farmer already exists", "error")
-            return redirect(url_for("auth"))
-
-        users_table.put_item(
-            Item={
-                "Email": email,
-                "Name": name,
-                "Password": password,
-                "Role": "farmer",
-                "CreatedAt": datetime.utcnow().isoformat()
-            }
-        )
-
-        send_notification("New Farmer Signup", f"{email} registered")
-        flash("Signup successful", "success")
+    res = users_table.get_item(Key={"Email": email})
+    if "Item" in res:
+        flash("Farmer already exists", "error")
         return redirect(url_for("auth"))
 
-    except Exception as e:
-        print("Signup error:", e)
-        flash("Signup failed", "error")
-        return redirect(url_for("auth"))
+    users_table.put_item(
+        Item={
+            "Email": email,
+            "Name": name,
+            "Password": password,
+            "Role": "farmer",
+            "CreatedAt": datetime.utcnow().isoformat()
+        }
+    )
+
+    send_notification("New Farmer Signup", f"{email} registered")
+    flash("Signup successful", "success")
+    return redirect(url_for("auth"))
 
 # ===============================
 # FARMER LOGIN
@@ -124,20 +121,20 @@ def signup_farmer():
 
 @app.route("/login/farmer", methods=["POST"])
 def login_farmer():
-    email = request.form.get("email")
-    password = request.form.get("password")
+    session.clear()   
 
-    try:
-        res = users_table.get_item(Key={"Email": email})
-        if "Item" in res and res["Item"]["Password"] == password:
-            session["user"] = email
-            session["role"] = "farmer"
+    email = request.form["email"]
+    password = request.form["password"]
 
-            send_notification("Farmer Login", f"{email} logged in")
-            return redirect(url_for("dashboard"))
+    res = users_table.get_item(Key={"Email": email})
 
-    except Exception as e:
-        print("Login error:", e)
+    if "Item" in res and res["Item"]["Password"] == password:
+        session["user"] = email
+        session["name"] = res["Item"]["Name"]
+        session["role"] = "farmer"
+
+        send_notification("Farmer Login", f"{email} logged in")
+        return redirect(url_for("dashboard"))
 
     flash("Invalid credentials", "error")
     return redirect(url_for("auth"))
@@ -153,68 +150,108 @@ def dashboard():
 
     email = session["user"]
 
-    try:
-        res = yield_table.query(
-            KeyConditionExpression=Key("UserEmail").eq(email)
-        )
-        yields = res.get("Items", [])
-    except Exception as e:
-        print("Dashboard error:", e)
-        yields = []
+    res = yield_table.query(
+        KeyConditionExpression=Key("UserEmail").eq(email)
+    )
+    yields = res.get("Items", [])
 
-    return render_template("dashboard.html", yields=yields)
+    total_area = sum(float(y.get("Area", 0)) for y in yields)
+    total_production = sum(float(y.get("YieldAmount", 0)) for y in yields)
+
+    stats = {
+        "total_records": len(yields),
+        "total_area": total_area,
+        "total_production": total_production,
+        "avg_yield": round(total_production / total_area, 2) if total_area > 0 else 0
+    }
+
+    return render_template(
+        "dashboard.html",
+        yields=yields,
+        stats=stats,
+        farmer_name=session.get("name")
+    )
 
 # ===============================
-# ADD YIELD
+# ADD YIELD (GET + POST)
 # ===============================
 
-@app.route("/add-yield", methods=["POST"])
+@app.route("/add-yield", methods=["GET", "POST"])
 def add_yield():
     if session.get("role") != "farmer":
         return redirect(url_for("auth"))
 
-    try:
-        yield_table.put_item(
-            Item={
-                "UserEmail": session["user"],
-                "YieldID": str(uuid.uuid4()),
-                "YieldAmount": float(request.form["yield_amount"]),
-                "Area": float(request.form["area"]),
-                "CreatedAt": datetime.utcnow().isoformat()
-            }
-        )
+    if request.method == "POST":
+        try:
+            yield_table.put_item(
+                Item={
+                    "UserEmail": session["user"],
+                    "YieldID": str(uuid.uuid4()),
+                    "YieldAmount": Decimal(request.form["yield_amount"]),  
+                    "Area": Decimal(request.form["area"]),                
+                    "CreatedAt": datetime.utcnow().strftime("%Y-%m-%d")
+                }
+            )
 
-        send_notification("Yield Added", f"{session['user']} added yield")
-        flash("Yield added successfully", "success")
+            send_notification("Yield Added", f"{session['user']} added yield")
+            flash("Yield added successfully", "success")
+            return redirect(url_for("dashboard"))
 
-    except Exception as e:
-        print("Add yield error:", e)
-        flash("Failed to add yield", "error")
+        except Exception as e:
+            print("Add yield error:", e)
+            flash("Failed to add yield", "error")
+            return redirect(url_for("dashboard"))
 
-    return redirect(url_for("dashboard"))
+    return render_template("add_yield.html")
 
 # ===============================
-# ADMIN
+# ADMIN SIGNUP
 # ===============================
 
 @app.route("/signup/admin", methods=["POST"])
 def signup_admin():
-    try:
-        users_table.put_item(
-            Item={
-                "Email": request.form["email"],
-                "Name": request.form["name"],
-                "Password": request.form["password"],
-                "Role": "admin",
-                "CreatedAt": datetime.utcnow().isoformat()
-            }
-        )
-        flash("Admin registered", "success")
-    except Exception as e:
-        print("Admin signup error:", e)
-        flash("Admin signup failed", "error")
+    users_table.put_item(
+        Item={
+            "Email": request.form["email"],
+            "Name": request.form["name"],
+            "Password": request.form["password"],
+            "Role": "admin",
+            "CreatedAt": datetime.utcnow().isoformat()
+        }
+    )
 
+    flash("Admin registered successfully", "success")
     return redirect(url_for("auth_admin"))
+
+# ===============================
+# ADMIN LOGIN
+# ===============================
+
+@app.route("/login/admin", methods=["POST"]) 
+def login_admin():
+    session.clear()   
+
+    email = request.form["email"]
+    password = request.form["password"]
+
+    res = users_table.get_item(Key={"Email": email})
+
+    if (
+        "Item" in res
+        and res["Item"]["Password"] == password
+        and res["Item"]["Role"] == "admin"
+    ):
+        session["user"] = email
+        session["name"] = res["Item"]["Name"]
+        session["role"] = "admin"
+        return redirect(url_for("admin_dashboard"))
+
+    flash("Invalid admin credentials", "error")
+    return redirect(url_for("auth_admin"))
+
+# ===============================
+# ADMIN DASHBOARD
+# ===============================
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
@@ -224,10 +261,17 @@ def admin_dashboard():
     users = users_table.scan().get("Items", [])
     yields = yield_table.scan().get("Items", [])
 
+    stats = {
+        "total_users": len(users),
+        "total_farmers": len([u for u in users if u["Role"] == "farmer"]),
+        "total_yields": len(yields)
+    }
+
     return render_template(
         "admin_dashboard.html",
         users=users,
-        yields=yields
+        yields=yields,
+        stats=stats
     )
 
 # ===============================
@@ -237,7 +281,7 @@ def admin_dashboard():
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("Logged out", "success")
+    flash("Logged out successfully", "success")
     return redirect(url_for("index"))
 
 # ===============================
