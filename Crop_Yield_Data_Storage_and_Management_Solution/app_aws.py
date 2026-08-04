@@ -1,17 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import boto3
 import uuid
+import os
 from datetime import datetime
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import NoCredentialsError
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # ===============================
 # APP CONFIG
 # ===============================
 
 app = Flask(__name__)
-app.secret_key = "crop_yield_aws_secret"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-only-fallback-key")
 REGION = "us-east-1"
 
 # ===============================
@@ -26,7 +28,7 @@ except NoCredentialsError:
 
 # SNS
 ENABLE_SNS = True
-SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:767828767507:Crop_aws"
+SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
 
 sns = None
 if ENABLE_SNS:
@@ -105,7 +107,7 @@ def signup_farmer():
         Item={
             "Email": email,
             "Name": name,
-            "Password": password,
+            "Password": generate_password_hash(password),
             "Role": "farmer",
             "CreatedAt": datetime.utcnow().isoformat()
         }
@@ -128,7 +130,7 @@ def login_farmer():
 
     res = users_table.get_item(Key={"Email": email})
 
-    if "Item" in res and res["Item"]["Password"] == password:
+    if "Item" in res and check_password_hash(res["Item"]["Password"], password):
         session["user"] = email
         session["name"] = res["Item"]["Name"]
         session["role"] = "farmer"
@@ -214,7 +216,7 @@ def signup_admin():
         Item={
             "Email": request.form["email"],
             "Name": request.form["name"],
-            "Password": request.form["password"],
+            "Password": generate_password_hash(request.form["password"]),
             "Role": "admin",
             "CreatedAt": datetime.utcnow().isoformat()
         }
@@ -238,7 +240,7 @@ def login_admin():
 
     if (
         "Item" in res
-        and res["Item"]["Password"] == password
+        and check_password_hash(res["Item"]["Password"], password)
         and res["Item"]["Role"] == "admin"
     ):
         session["user"] = email
@@ -289,4 +291,4 @@ def logout():
 # ===============================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
