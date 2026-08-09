@@ -123,7 +123,7 @@ def signup_farmer():
 
 @app.route("/login/farmer", methods=["POST"])
 def login_farmer():
-    session.clear()   
+    session.clear()
 
     email = request.form["email"]
     password = request.form["password"]
@@ -155,10 +155,22 @@ def dashboard():
     res = yield_table.query(
         KeyConditionExpression=Key("UserEmail").eq(email)
     )
-    yields = res.get("Items", [])
+    raw_yields = res.get("Items", [])
 
-    total_area = sum(float(y.get("Area", 0)) for y in yields)
-    total_production = sum(float(y.get("YieldAmount", 0)) for y in yields)
+    yields = [
+        {
+            "id": r.get("YieldID", ""),
+            "crop_name": r.get("crop_name", ""),
+            "season": r.get("season", ""),
+            "yield_amount": float(r.get("YieldAmount", 0)),
+            "area": float(r.get("Area", 0)),
+            "timestamp": r.get("CreatedAt", "")
+        }
+        for r in raw_yields
+    ]
+
+    total_area = sum(y["area"] for y in yields)
+    total_production = sum(y["yield_amount"] for y in yields)
 
     stats = {
         "total_records": len(yields),
@@ -189,8 +201,10 @@ def add_yield():
                 Item={
                     "UserEmail": session["user"],
                     "YieldID": str(uuid.uuid4()),
-                    "YieldAmount": Decimal(request.form["yield_amount"]),  
-                    "Area": Decimal(request.form["area"]),                
+                    "crop_name": request.form["crop_name"],
+                    "season": request.form["season"],
+                    "YieldAmount": Decimal(request.form["yield_amount"]),
+                    "Area": Decimal(request.form["area"]),
                     "CreatedAt": datetime.utcnow().strftime("%Y-%m-%d")
                 }
             )
@@ -205,6 +219,7 @@ def add_yield():
             return redirect(url_for("dashboard"))
 
     return render_template("add_yield.html")
+
 
 # ===============================
 # ADMIN SIGNUP
@@ -229,9 +244,9 @@ def signup_admin():
 # ADMIN LOGIN
 # ===============================
 
-@app.route("/login/admin", methods=["POST"]) 
+@app.route("/login/admin", methods=["POST"])
 def login_admin():
-    session.clear()   
+    session.clear()
 
     email = request.form["email"]
     password = request.form["password"]
@@ -260,20 +275,64 @@ def admin_dashboard():
     if session.get("role") != "admin":
         return redirect(url_for("auth_admin"))
 
-    users = users_table.scan().get("Items", [])
-    yields = yield_table.scan().get("Items", [])
+    selected_season = request.args.get("season", "").strip()
+
+    raw_users = users_table.scan().get("Items", [])
+
+    if selected_season:
+        # A season filter was chosen: use the SeasonIndex GSI
+        # instead of scanning the whole table.
+        raw_yields = yield_table.query(
+            IndexName="SeasonIndex",
+            KeyConditionExpression=Key("season").eq(selected_season)
+        ).get("Items", [])
+    else:
+        # No filter: full table scan (all seasons).
+        raw_yields = yield_table.scan().get("Items", [])
+
+    # Yield records only store the farmer's email, not their name,
+    # so build a lookup to show a readable name in the table.
+    name_by_email = {u.get("Email", ""): u.get("Name", "") for u in raw_users}
+
+    users = [
+        {
+            "email": u.get("Email", ""),
+            "role": u.get("Role", "").capitalize()
+        }
+        for u in raw_users
+    ]
+
+    yields = [
+        {
+            "id": r.get("YieldID", ""),
+            "user_email": r.get("UserEmail", ""),
+            "user_name": name_by_email.get(r.get("UserEmail", ""), r.get("UserEmail", "Unknown")),
+            "crop_name": r.get("crop_name", ""),
+            "season": r.get("season", ""),
+            "yield_amount": float(r.get("YieldAmount", 0)),
+            "area": float(r.get("Area", 0)),
+            "timestamp": r.get("CreatedAt", "")
+        }
+        for r in raw_yields
+    ]
+
+    total_production = sum(y["yield_amount"] for y in yields)
 
     stats = {
         "total_users": len(users),
-        "total_farmers": len([u for u in users if u["Role"] == "farmer"]),
-        "total_yields": len(yields)
+        "total_farmers": len([u for u in users if u["role"] == "Farmer"]),
+        "total_admins": len([u for u in users if u["role"] == "Admin"]),
+        "total_records": len(yields),
+        "total_production": round(total_production, 2)
     }
 
     return render_template(
         "admin_dashboard.html",
         users=users,
         yields=yields,
-        stats=stats
+        stats=stats,
+        selected_season=selected_season,
+        seasons=["Kharif", "Rabi", "Zaid", "Spring", "Summer", "Fall", "Winter"]
     )
 
 # ===============================
