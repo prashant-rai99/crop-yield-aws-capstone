@@ -1,0 +1,16 @@
+[
+  {
+    "Create": {
+      "IndexName": "SeasonIndex",
+      "KeySchema": [
+        {
+          "AttributeName": "season",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  }
+]

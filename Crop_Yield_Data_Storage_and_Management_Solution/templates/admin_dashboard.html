@@ -243,6 +243,22 @@
                 </div>
             </div>
             
+            <div class="season-filter-bar">
+    <form method="GET" action="{{ url_for('admin_dashboard') }}">
+        <label for="season">Filter by Season:</label>
+        <select name="season" id="season">
+            <option value="">All Seasons</option>
+            {% for s in seasons %}
+                <option value="{{ s }}" {% if s == selected_season %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline">Filter</button>
+        {% if selected_season %}
+            <a href="{{ url_for('admin_dashboard') }}">Clear filter</a>
+        {% endif %}
+    </form>
+</div>
+
             {% if yields %}
             <div class="table-wrapper">
                 <table class="data-table admin-table" id="allYieldsTable">
