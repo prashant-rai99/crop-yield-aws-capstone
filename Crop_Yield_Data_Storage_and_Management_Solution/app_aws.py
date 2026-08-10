@@ -1,3 +1,5 @@
+from json import load
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import boto3
 import uuid
@@ -7,11 +9,12 @@ from decimal import Decimal
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import NoCredentialsError
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 
 # ===============================
 # APP CONFIG
 # ===============================
-
+load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-only-fallback-key")
 REGION = "us-east-1"
