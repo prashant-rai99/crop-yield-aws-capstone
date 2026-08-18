@@ -1,5 +1,6 @@
 from json import load
-
+import json
+import joblib
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import boto3
 import uuid
@@ -10,6 +11,7 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import NoCredentialsError
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+import pandas as pd
 
 # ===============================
 # APP CONFIG
@@ -46,6 +48,55 @@ if ENABLE_SNS:
 
 users_table = dynamodb.Table("CropYield_Users")
 yield_table = dynamodb.Table("CropYield_Data")
+
+# ===============================
+# FORECAST MODEL (Phase 5)
+# ===============================
+
+FORECAST_MODEL_PATH = os.path.join("ml", "models", "forecast_model.pkl")
+FORECAST_METADATA_PATH = os.path.join("ml", "models", "forecast_metadata.json")
+FORECAST_AVERAGES_PATH = os.path.join("ml", "models", "forecast_averages.json")
+FORECAST_HISTORY_PATH = os.path.join("ml", "models", "forecast_history.json")
+
+forecast_bundle = None
+forecast_metadata = None
+forecast_averages = None
+forecast_history = None
+
+try:
+    forecast_bundle = joblib.load(FORECAST_MODEL_PATH)
+    with open(FORECAST_METADATA_PATH) as f:
+        forecast_metadata = json.load(f)
+    with open(FORECAST_AVERAGES_PATH) as f:
+        forecast_averages = json.load(f)
+    with open(FORECAST_HISTORY_PATH) as f:
+        forecast_history = json.load(f)
+except FileNotFoundError:
+    print("Forecast model files not found - /forecast will be unavailable.")
+
+
+def get_technical_averages(crop, state, season):
+    key_full = f"{crop}|{state}|{season}"
+    if key_full in forecast_averages["by_crop_state_season"]:
+        return forecast_averages["by_crop_state_season"][key_full]
+    key_crop_season = f"{crop}|{season}"
+    if key_crop_season in forecast_averages["by_crop_season"]:
+        return forecast_averages["by_crop_season"][key_crop_season]
+    if crop in forecast_averages["by_crop"]:
+        return forecast_averages["by_crop"][crop]
+    return forecast_averages["global"]
+
+
+def get_yield_history(crop, state, season):
+    key_full = f"{crop}|{state}|{season}"
+    if key_full in forecast_history["by_crop_state_season"]:
+        return forecast_history["by_crop_state_season"][key_full]
+    key_crop_season = f"{crop}|{season}"
+    if key_crop_season in forecast_history["by_crop_season"]:
+        return forecast_history["by_crop_season"][key_crop_season]
+    if crop in forecast_history["by_crop"]:
+        return forecast_history["by_crop"][crop]
+    return []
 
 # ===============================
 # CONTEXT
@@ -283,18 +334,13 @@ def admin_dashboard():
     raw_users = users_table.scan().get("Items", [])
 
     if selected_season:
-        # A season filter was chosen: use the SeasonIndex GSI
-        # instead of scanning the whole table.
         raw_yields = yield_table.query(
             IndexName="SeasonIndex",
             KeyConditionExpression=Key("season").eq(selected_season)
         ).get("Items", [])
     else:
-        # No filter: full table scan (all seasons).
         raw_yields = yield_table.scan().get("Items", [])
 
-    # Yield records only store the farmer's email, not their name,
-    # so build a lookup to show a readable name in the table.
     name_by_email = {u.get("Email", ""): u.get("Name", "") for u in raw_users}
 
     users = [
@@ -336,6 +382,83 @@ def admin_dashboard():
         stats=stats,
         selected_season=selected_season,
         seasons=["Kharif", "Rabi", "Zaid", "Spring", "Summer", "Fall", "Winter"]
+    )
+
+# ===============================
+# YIELD FORECAST (Phase 5)
+# ===============================
+
+@app.route("/forecast", methods=["GET", "POST"])
+def forecast():
+    if session.get("role") not in ("farmer", "admin"):
+        return redirect(url_for("auth"))
+
+    if forecast_bundle is None:
+        flash("Forecast model is not available right now.", "error")
+        return redirect(url_for("dashboard" if session.get("role") == "farmer" else "admin_dashboard"))
+
+    prediction = None
+    form_values = {}
+    history_json = "[]"
+
+    if request.method == "POST":
+        try:
+            crop = request.form["crop"]
+            season = request.form["season"]
+            state = request.form["state"]
+            year = int(request.form["year"])
+            area = float(request.form["area"])
+
+            form_values = {"crop": crop, "season": season, "state": state,
+                            "year": year, "area": area}
+
+            technical = get_technical_averages(crop, state, season)
+            history = get_yield_history(crop, state, season)
+            has_sufficient_history = len(history) >= 3
+
+            model = forecast_bundle["model"]
+            encoders = forecast_bundle["encoders"]
+            feature_columns = forecast_bundle["feature_columns"]
+
+            row = {
+                "Crop": encoders["Crop"].transform([crop])[0],
+                "Season": encoders["Season"].transform([season])[0],
+                "State": encoders["State"].transform([state])[0],
+                "Crop_Year": year,
+                "Area": area,
+                "Annual_Rainfall": technical["Annual_Rainfall"],
+                "Fertilizer": technical["Fertilizer"],
+                "Pesticide": technical["Pesticide"],
+            }
+
+            X = pd.DataFrame([row])[feature_columns]
+            predicted_yield = float(model.predict(X)[0])
+            prediction = {
+                "yield_per_hectare": round(predicted_yield, 3),
+                "estimated_total": round(predicted_yield * area, 2),
+                "technical_inputs_used": technical,
+            }
+
+            chart_points = [{"year": p["year"], "yield": p["yield"], "type": "actual"} for p in history]
+            chart_points.append({"year": year, "yield": round(predicted_yield, 3), "type": "predicted"})
+            chart_points.sort(key=lambda p: p["year"])
+            history_json = json.dumps(chart_points)
+
+        except (KeyError, ValueError) as e:
+            print("Forecast error:", e)
+            flash("Please fill in all fields with valid values.", "error")
+
+    return render_template(
+        "forecast.html",
+        crops=forecast_metadata["available_crops"],
+        seasons=forecast_metadata["available_seasons"],
+        states=forecast_metadata["available_states"],
+        year_range=forecast_metadata["year_range"],
+        median_ape=forecast_metadata["median_ape_percent"],
+        prediction=prediction,
+        form_values=form_values,
+        history_json=history_json,
+        has_sufficient_history=len(history) >= 3 if prediction else True,
     )
 
 # ===============================
