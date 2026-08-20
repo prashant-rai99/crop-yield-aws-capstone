@@ -12,6 +12,19 @@ from botocore.exceptions import NoCredentialsError
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import pandas as pd
+import markdown
+
+from google import genai
+from google.genai import types
+
+from assistant_tools import (
+    query_yield_data,
+    QUERY_YIELD_DATA_DECLARATION,
+    get_analytics,
+    GET_ANALYTICS_DECLARATION,
+    predict_yield,
+    PREDICT_YIELD_DECLARATION,
+)
 
 # ===============================
 # APP CONFIG
@@ -41,6 +54,32 @@ if ENABLE_SNS:
         sns = boto3.client("sns", region_name=REGION)
     except Exception as e:
         print("SNS init failed:", e)
+
+athena_client = boto3.client("athena", region_name=REGION)
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
+GEMINI_MODEL = "gemini-3.1-flash-lite"
+
+
+ASSISTANT_TOOLS = types.Tool(
+    function_declarations=[
+        QUERY_YIELD_DATA_DECLARATION,
+        GET_ANALYTICS_DECLARATION,
+        PREDICT_YIELD_DECLARATION,
+    ]
+)
+ASSISTANT_CONFIG = types.GenerateContentConfig(
+    tools=[ASSISTANT_TOOLS],
+    system_instruction=(
+        "You are a farming data assistant. Answer the user's question "
+        "directly and concisely using the tool results provided. "
+        "Prefer 2-4 short sentences or a small bullet list over long essays. "
+        "Only include a markdown table if the user's question specifically "
+        "asks for a comparison or breakdown across multiple items — "
+        "otherwise just state the answer in plain sentences."
+    ),
+)
 
 # ===============================
 # TABLES
@@ -98,53 +137,60 @@ def get_yield_history(crop, state, season):
         return forecast_history["by_crop"][crop]
     return []
 
+
 # ===============================
 # CONTEXT
 # ===============================
+
 
 @app.context_processor
 def inject_now():
     return {"now": datetime.now()}
 
+
 # ===============================
 # SNS HELPER
 # ===============================
+
 
 def send_notification(subject, message):
     if not sns:
         return
     try:
-        sns.publish(
-            TopicArn=SNS_TOPIC_ARN,
-            Subject=subject,
-            Message=message
-        )
+        sns.publish(TopicArn=SNS_TOPIC_ARN, Subject=subject, Message=message)
     except Exception as e:
         print("SNS error:", e)
+
 
 # ===============================
 # PUBLIC ROUTES
 # ===============================
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 @app.route("/about")
 def about():
     return render_template("about.html")
 
+
 @app.route("/auth")
 def auth():
     return render_template("auth.html")
+
 
 @app.route("/auth/admin")
 def auth_admin():
     return render_template("auth_admin.html")
 
+
 # ===============================
 # FARMER SIGNUP
 # ===============================
+
 
 @app.route("/signup/farmer", methods=["POST"])
 def signup_farmer():
@@ -163,7 +209,7 @@ def signup_farmer():
             "Name": name,
             "Password": generate_password_hash(password),
             "Role": "farmer",
-            "CreatedAt": datetime.utcnow().isoformat()
+            "CreatedAt": datetime.utcnow().isoformat(),
         }
     )
 
@@ -171,9 +217,11 @@ def signup_farmer():
     flash("Signup successful", "success")
     return redirect(url_for("auth"))
 
+
 # ===============================
 # FARMER LOGIN
 # ===============================
+
 
 @app.route("/login/farmer", methods=["POST"])
 def login_farmer():
@@ -195,9 +243,11 @@ def login_farmer():
     flash("Invalid credentials", "error")
     return redirect(url_for("auth"))
 
+
 # ===============================
 # FARMER DASHBOARD
 # ===============================
+
 
 @app.route("/dashboard")
 def dashboard():
@@ -206,9 +256,7 @@ def dashboard():
 
     email = session["user"]
 
-    res = yield_table.query(
-        KeyConditionExpression=Key("UserEmail").eq(email)
-    )
+    res = yield_table.query(KeyConditionExpression=Key("UserEmail").eq(email))
     raw_yields = res.get("Items", [])
 
     yields = [
@@ -218,7 +266,7 @@ def dashboard():
             "season": r.get("season", ""),
             "yield_amount": float(r.get("YieldAmount", 0)),
             "area": float(r.get("Area", 0)),
-            "timestamp": r.get("CreatedAt", "")
+            "timestamp": r.get("CreatedAt", ""),
         }
         for r in raw_yields
     ]
@@ -230,19 +278,18 @@ def dashboard():
         "total_records": len(yields),
         "total_area": total_area,
         "total_production": total_production,
-        "avg_yield": round(total_production / total_area, 2) if total_area > 0 else 0
+        "avg_yield": round(total_production / total_area, 2) if total_area > 0 else 0,
     }
 
     return render_template(
-        "dashboard.html",
-        yields=yields,
-        stats=stats,
-        farmer_name=session.get("name")
+        "dashboard.html", yields=yields, stats=stats, farmer_name=session.get("name")
     )
+
 
 # ===============================
 # ADD YIELD (GET + POST)
 # ===============================
+
 
 @app.route("/add-yield", methods=["GET", "POST"])
 def add_yield():
@@ -259,7 +306,7 @@ def add_yield():
                     "season": request.form["season"],
                     "YieldAmount": Decimal(request.form["yield_amount"]),
                     "Area": Decimal(request.form["area"]),
-                    "CreatedAt": datetime.utcnow().strftime("%Y-%m-%d")
+                    "CreatedAt": datetime.utcnow().strftime("%Y-%m-%d"),
                 }
             )
 
@@ -279,6 +326,7 @@ def add_yield():
 # ADMIN SIGNUP
 # ===============================
 
+
 @app.route("/signup/admin", methods=["POST"])
 def signup_admin():
     users_table.put_item(
@@ -287,16 +335,18 @@ def signup_admin():
             "Name": request.form["name"],
             "Password": generate_password_hash(request.form["password"]),
             "Role": "admin",
-            "CreatedAt": datetime.utcnow().isoformat()
+            "CreatedAt": datetime.utcnow().isoformat(),
         }
     )
 
     flash("Admin registered successfully", "success")
     return redirect(url_for("auth_admin"))
 
+
 # ===============================
 # ADMIN LOGIN
 # ===============================
+
 
 @app.route("/login/admin", methods=["POST"])
 def login_admin():
@@ -320,9 +370,11 @@ def login_admin():
     flash("Invalid admin credentials", "error")
     return redirect(url_for("auth_admin"))
 
+
 # ===============================
 # ADMIN DASHBOARD
 # ===============================
+
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
@@ -336,7 +388,7 @@ def admin_dashboard():
     if selected_season:
         raw_yields = yield_table.query(
             IndexName="SeasonIndex",
-            KeyConditionExpression=Key("season").eq(selected_season)
+            KeyConditionExpression=Key("season").eq(selected_season),
         ).get("Items", [])
     else:
         raw_yields = yield_table.scan().get("Items", [])
@@ -344,10 +396,7 @@ def admin_dashboard():
     name_by_email = {u.get("Email", ""): u.get("Name", "") for u in raw_users}
 
     users = [
-        {
-            "email": u.get("Email", ""),
-            "role": u.get("Role", "").capitalize()
-        }
+        {"email": u.get("Email", ""), "role": u.get("Role", "").capitalize()}
         for u in raw_users
     ]
 
@@ -355,12 +404,14 @@ def admin_dashboard():
         {
             "id": r.get("YieldID", ""),
             "user_email": r.get("UserEmail", ""),
-            "user_name": name_by_email.get(r.get("UserEmail", ""), r.get("UserEmail", "Unknown")),
+            "user_name": name_by_email.get(
+                r.get("UserEmail", ""), r.get("UserEmail", "Unknown")
+            ),
             "crop_name": r.get("crop_name", ""),
             "season": r.get("season", ""),
             "yield_amount": float(r.get("YieldAmount", 0)),
             "area": float(r.get("Area", 0)),
-            "timestamp": r.get("CreatedAt", "")
+            "timestamp": r.get("CreatedAt", ""),
         }
         for r in raw_yields
     ]
@@ -372,7 +423,7 @@ def admin_dashboard():
         "total_farmers": len([u for u in users if u["role"] == "Farmer"]),
         "total_admins": len([u for u in users if u["role"] == "Admin"]),
         "total_records": len(yields),
-        "total_production": round(total_production, 2)
+        "total_production": round(total_production, 2),
     }
 
     return render_template(
@@ -381,12 +432,14 @@ def admin_dashboard():
         yields=yields,
         stats=stats,
         selected_season=selected_season,
-        seasons=["Kharif", "Rabi", "Zaid", "Spring", "Summer", "Fall", "Winter"]
+        seasons=["Kharif", "Rabi", "Zaid", "Spring", "Summer", "Fall", "Winter"],
     )
+
 
 # ===============================
 # YIELD FORECAST (Phase 5)
 # ===============================
+
 
 @app.route("/forecast", methods=["GET", "POST"])
 def forecast():
@@ -395,7 +448,11 @@ def forecast():
 
     if forecast_bundle is None:
         flash("Forecast model is not available right now.", "error")
-        return redirect(url_for("dashboard" if session.get("role") == "farmer" else "admin_dashboard"))
+        return redirect(
+            url_for(
+                "dashboard" if session.get("role") == "farmer" else "admin_dashboard"
+            )
+        )
 
     prediction = None
     form_values = {}
@@ -409,8 +466,13 @@ def forecast():
             year = int(request.form["year"])
             area = float(request.form["area"])
 
-            form_values = {"crop": crop, "season": season, "state": state,
-                            "year": year, "area": area}
+            form_values = {
+                "crop": crop,
+                "season": season,
+                "state": state,
+                "year": year,
+                "area": area,
+            }
 
             technical = get_technical_averages(crop, state, season)
             history = get_yield_history(crop, state, season)
@@ -439,8 +501,13 @@ def forecast():
                 "technical_inputs_used": technical,
             }
 
-            chart_points = [{"year": p["year"], "yield": p["yield"], "type": "actual"} for p in history]
-            chart_points.append({"year": year, "yield": round(predicted_yield, 3), "type": "predicted"})
+            chart_points = [
+                {"year": p["year"], "yield": p["yield"], "type": "actual"}
+                for p in history
+            ]
+            chart_points.append(
+                {"year": year, "yield": round(predicted_yield, 3), "type": "predicted"}
+            )
             chart_points.sort(key=lambda p: p["year"])
             history_json = json.dumps(chart_points)
 
@@ -461,15 +528,102 @@ def forecast():
         has_sufficient_history=len(history) >= 3 if prediction else True,
     )
 
+
+# ===============================
+# ASSISTANT (Phase 6)
+# ===============================
+
+
+@app.route("/assistant", methods=["GET", "POST"])
+def assistant():
+    if session.get("role") not in ("farmer", "admin"):
+        return redirect(url_for("auth"))
+
+    answer = None
+    question = None
+
+    if request.method == "POST":
+        question = request.form.get("question", "").strip()
+
+        if question and gemini_client:
+            user_email = session["user"]
+
+            contents = [types.Content(role="user", parts=[types.Part(text=question)])]
+
+            try:
+                for _ in range(5):
+                    response = gemini_client.models.generate_content(
+                        model=GEMINI_MODEL,
+                        contents=contents,
+                        config=ASSISTANT_CONFIG,
+                    )
+                    candidate_content = response.candidates[0].content
+                    function_calls = [
+                        part.function_call
+                        for part in candidate_content.parts
+                        if part.function_call
+                    ]
+
+                    if not function_calls:
+                        answer = response.text
+                        break
+
+                    contents.append(candidate_content)
+                    response_parts = []
+
+                    for fc in function_calls:
+                        args = dict(fc.args)
+
+                        if fc.name == "query_yield_data":
+                            result = query_yield_data(
+                                yield_table, user_email=user_email, **args
+                            )
+                        elif fc.name == "get_analytics":
+                            result = get_analytics(athena_client, **args)
+                        elif fc.name == "predict_yield":
+                            if forecast_bundle is None:
+                                result = {
+                                    "error": "Forecast model is not available right now."
+                                }
+                            else:
+                                result = predict_yield(
+                                    forecast_bundle, get_technical_averages, **args
+                                )
+                        else:
+                            result = {"error": f"unknown tool {fc.name}"}
+
+                        response_parts.append(
+                            types.Part.from_function_response(
+                                name=fc.name, response={"result": result}
+                            )
+                        )
+
+                    contents.append(types.Content(role="user", parts=response_parts))
+                else:
+                    answer = "Sorry, I couldn't find an answer to that in time. Please try rephrasing your question."
+
+            except Exception as e:
+                print("Assistant error:", e)
+                answer = (
+                    "The assistant is temporarily unavailable (it may be "
+                    "rate-limited or busy). Please try again in a minute."
+                )
+
+    answer_html = markdown.markdown(answer, extensions=["tables"]) if answer else None
+    return render_template("assistant.html", answer=answer_html, question=question)
+
+
 # ===============================
 # LOGOUT
 # ===============================
+
 
 @app.route("/logout")
 def logout():
     session.clear()
     flash("Logged out successfully", "success")
     return redirect(url_for("index"))
+
 
 # ===============================
 # RUN

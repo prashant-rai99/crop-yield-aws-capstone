@@ -1,0 +1,77 @@
+{% extends 'layout.html' %}
+
+{% block title %}Ask the Assistant{% endblock %}
+
+{% block content %}
+<section class="dashboard-header">
+    <div class="dashboard-container">
+        <div class="dashboard-welcome">
+            <div class="welcome-content">
+                <span class="welcome-tag animate-fade-in">AI Assistant</span>
+                <h1 class="welcome-title animate-slide-up">
+                    Ask about your <span class="user-highlight">yield data</span>
+                </h1>
+                <p class="welcome-subtitle animate-slide-up delay-1">
+                    Ask a question in plain English about your crop yield records.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="dashboard-stats">
+    <div class="dashboard-container">
+        <div class="records-card">
+            <form method="POST" action="{{ url_for('assistant') }}">
+                <input type="text" name="question" placeholder="e.g. What was my total wheat production this year?"
+                    value="{{ question or '' }}"
+                    style="width: 100%; padding: 12px; font-size: 16px; margin-bottom: 12px;" required>
+                <button type="submit" class="btn btn-primary">Ask</button>
+            </form>
+
+            {% if answer %}
+            <div class="assistant-answer"
+                style="margin-top: 24px; padding: 16px; border-radius: 8px; background: rgba(0,0,0,0.03);">
+                <strong>Answer:</strong>
+                <div class="assistant-answer-body">{{ answer | safe }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<style>
+    .assistant-answer-body {
+        margin-top: 8px;
+        line-height: 1.6;
+    }
+
+    .assistant-answer-body p {
+        margin: 0 0 10px 0;
+    }
+
+    .assistant-answer-body ul,
+    .assistant-answer-body ol {
+        margin: 0 0 10px 20px;
+    }
+
+    .assistant-answer-body table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0;
+        font-size: 14px;
+    }
+
+    .assistant-answer-body th,
+    .assistant-answer-body td {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        padding: 8px 10px;
+        text-align: left;
+    }
+
+    .assistant-answer-body th {
+        background: rgba(0, 0, 0, 0.04);
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
