@@ -15,3 +15,9 @@ python-dotenv
 
 # Production Server (for AWS EC2 deployment)
 gunicorn
+
+pandas
+scikit-learn
+joblib
+google-genai
+markdown

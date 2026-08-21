@@ -203,6 +203,42 @@
     <main class="main-content">
         {% block content %}{% endblock %}
     </main>
+    
+    {% if session.get('user') and request.endpoint != 'assistant' %}
+    <a href="{{ url_for('assistant') }}" class="assistant-fab" title="Ask the AI Assistant"
+        aria-label="Ask the AI Assistant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </a>
+    
+    <style>
+        .assistant-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-800, #2e7d32);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+    
+        .assistant-fab:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+    </style>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="footer">

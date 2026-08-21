@@ -24,6 +24,9 @@
                     </svg>
                     <span>Add New Yield</span>
                 </a>
+                <a href="{{ url_for('forecast') }}" class="btn btn-outline btn-lg">
+                    <span>Yield Forecast</span>
+                </a>
             </div>
         </div>
     </div>
@@ -262,6 +265,9 @@
                         <line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
                     Add Your First Record
+                </a>
+                <a href="{{ url_for('forecast') }}" class="btn btn-outline btn-lg">
+                    <span>Yield Forecast</span>
                 </a>
             </div>
             {% endif %}
